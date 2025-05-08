@@ -7,31 +7,46 @@
     <style>
         body {
             margin: 0;
-            overflow: hidden;
-            background-color: #000;
-        }
-        #container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: rgb(0, 0, 255); /* Blå bakgrund för väggarna */
+            padding: 0;
             display: flex;
             justify-content: center;
             align-items: center;
+            height: 100vh;
+            background-color: #000;
+            position: relative; 
+            overflow: hidden;
         }
-        #game-area {
+        #scoreContainer {
+            position: absolute;
+            top: 10%;
+            left: 15%; 
+            color: white;
+            font-size: 25px;
+            font-family: Arial, sans-serif;
+            background-color: rgba(255, 255, 255, 0.345);
+            padding-left: 30px;
+            padding-right: 30px;
+            border-radius: 10px;
+            width: auto; 
+        }
+        #gameContainer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 560px; /* Samma bredd som spelområdet */
+            height: 620px; /* Samma höjd som spelområdet */
+        }
+        #gameArea {
+            scale: 1.5; /* Skala upp spelområdet */
             display: grid;
-            grid-template-columns: repeat(36, 1fr); 
-            grid-template-rows: repeat(28, 1fr); 
-            width: 80vmin; /* Gör spelet kvadratiskt */
-            height: 80vmin; /* Gör spelet kvadratiskt */
-            background-color: #2e2e2e;
+            width: 560px;
+            height: 620px;
+            grid-template-columns: repeat(28, 20px);
+            grid-template-rows: repeat(31, 20px);
+            background-color: rgb(0, 0, 0);
+            position: relative;
         }
         #pacman {
-            grid-column: 0; 
-            grid-row: 0;
             width: 100%; 
             height: 100%;
             background-color: yellow;
@@ -46,54 +61,107 @@
             align-self: center;
         }
         .wall {
-            background-color: rgb(0, 0, 0);
-            border: 2px solid rgb(0, 0, 255);
-            margin: 10px;
-            border-radius: 17px;
+            background-color: blue;
+            width: 20px;
+            height: 20px;
         }
     </style>
 </head>
 <body>
-    <div id="container">
-        <div id="game-area">
+    <div id="scoreContainer">
+        <p>Poäng: <span id="score">0</span></p>
+    </div>
+    <div id="gameContainer">
+        <div id="gameArea">
             <div id="pacman"></div>
         </div>
     </div>
     <script>
         const pacman = document.getElementById('pacman');
-        const gameArea = document.getElementById('game-area');
-        let pacmanPosition = { x: 23, y: 20 }; 
-        let direction = { x: 0, y: 0 }; 
+        const gameArea = document.getElementById('gameArea');
+        const scoreElement = document.getElementById('score');
+        let pacmanPosition = { x: 15, y: 24 }; 
+        let direction = { x: -1, y: 0 }; 
+        let queuedDirection = { x: 0, y: 0 }; 
         const moveSpeed = 4; 
         let lastTimestamp = 0; 
+        let score = 0; // Variabel för att hålla reda på poängen
 
-        function createDots() {
-            for (let row = 2; row <= 26; row+=1) { 
-                for (let col = 2; col <= 36; col+=1) { 
-                    const dot = document.createElement('div');
-                    dot.classList.add('dot');
-                    dot.style.gridColumn = col;
-                    dot.style.gridRow = row;
-                    gameArea.appendChild(dot);
-                }
-            }
-        }
+        const map = [
+            'WWWWWWWWWWWWWWWWWWWWWWWWWWWW',
+            'W............WW............W',
+            'W.WWWW.WWWWW.WW.WWWWW.WWWW.W',
+            'W*WWWW.WWWWW.WW.WWWWW.WWWW*W',
+            'W.WWWW.WWWWW.WW.WWWWW.WWWW.W',
+            'W..........................W',
+            'W.WWWW.WW.WWWWWWWW.WW.WWWW.W',
+            'W.WWWW.WW.WWWWWWWW.WW.WWWW.W',
+            'W......WW....WW....WW......W',
+            'WWWWWW.WWWWW WW WWWWW.WWWWWW',
+            '     W.WWWWW WW WWWWW.W     ',
+            '     W.WW          WW.W     ',
+            '     W.WW WWW--WWW WW.W     ',
+            'WWWWWW.WW W      W WW.WWWWWW',
+            '      .   W      W   .      ',
+            'WWWWWW.WW W      W WW.WWWWWW',
+            '     W.WW WWWWWWWW WW.W     ',
+            '     W.WW          WW.W     ',
+            '     W.WW WWWWWWWW WW.W     ',
+            'WWWWWW.WW WWWWWWWW WW.WWWWWW',
+            'W............WW............W',
+            'W.WWWW.WWWWW.WW.WWWWW.WWWW.W',
+            'W*WWWW.WWWWW.WW.WWWWW.WWWW*W',
+            'W...WW................WW...W',
+            'WWW.WW.WW.WWWWWWWW.WW.WW.WWW',
+            'WWW.WW.WW.WWWWWWWW.WW.WW.WWW',
+            'W......WW....WW....WW......W',
+            'W.WWWWWWWWWW.WW.WWWWWWWWWW.W',
+            'W.WWWWWWWWWW.WW.WWWWWWWWWW.W',
+            'W..........................W',
+            'WWWWWWWWWWWWWWWWWWWWWWWWWWWW'
+        ];
 
         function createWalls() {
-            const walls = [
-                { colStart: 1, colEnd: 36, rowStart: 1, rowEnd: 1 }, // Övre väggen
-                { colStart: 1, colEnd: 36, rowStart: 28, rowEnd: 28 }, // Nedre väggen
-                { colStart: 1, colEnd: 1, rowStart: 1, rowEnd: 28 }, // Vänster vägg
-                { colStart: 36, colEnd: 36, rowStart: 1, rowEnd: 28 } // Höger vägg
-            ];
-
-            walls.forEach(wallData => {
-                const wall = document.createElement('div');
-                wall.classList.add('wall');
-                wall.style.gridColumn = `${wallData.colStart} / ${wallData.colEnd + 1}`;
-                wall.style.gridRow = `${wallData.rowStart} / ${wallData.rowEnd + 1}`;
-                gameArea.appendChild(wall);
+            map.forEach((row, rowIndex) => {
+                [...row].forEach((cell, colIndex) => {
+                    if (cell === 'W') {
+                        const wall = document.createElement('div');
+                        wall.classList.add('wall');
+                        wall.style.gridColumn = `${colIndex + 1}`;
+                        wall.style.gridRow = `${rowIndex + 1}`;
+                        gameArea.appendChild(wall);
+                    }
+                });
             });
+        }
+
+        function createDots() {
+            map.forEach((row, rowIndex) => {
+                [...row].forEach((cell, colIndex) => {
+                    if (cell === '.') {
+                        const dot = document.createElement('div');
+                        dot.classList.add('dot');
+                        dot.style.gridColumn = `${colIndex + 1}`;
+                        dot.style.gridRow = `${rowIndex + 1}`;
+                        gameArea.appendChild(dot);
+                    }
+                });
+            });
+        }
+
+        function canMoveTo(x, y) {
+            const col = Math.round(x);
+            const row = Math.round(y);
+            return map[row - 1] && map[row - 1][col - 1] !== 'W';
+        }
+
+        function checkWinCondition() {
+            const remainingDots = document.querySelectorAll('.dot');
+            if (remainingDots.length === 0) {
+                alert('Grattis! Du vann spelet!');
+                return true;
+            }
+            return false;
         }
 
         function movePacman(timestamp) {
@@ -102,58 +170,212 @@
             }
 
             const deltaTime = (timestamp - lastTimestamp) / 1000;
-            const distance = moveSpeed * deltaTime; 
+            const distance = moveSpeed * deltaTime;
 
-            
-            pacmanPosition.x += direction.x * distance;
-            pacmanPosition.y += direction.y * distance;
+            if (queuedDirection.x !== 0 || queuedDirection.y !== 0) {
+                const nextQueuedX = pacmanPosition.x + queuedDirection.x * distance;
+                const nextQueuedY = pacmanPosition.y + queuedDirection.y * distance;
 
-            
-            pacmanPosition.x = Math.max(1, Math.min(36, pacmanPosition.x));
-            pacmanPosition.y = Math.max(1, Math.min(28, pacmanPosition.y));
-
-            
-            pacman.style.gridColumn = Math.round(pacmanPosition.x);
-            pacman.style.gridRow = Math.round(pacmanPosition.y);
-
-         
-            pacman.style.transform = `translate(${(pacmanPosition.x - Math.round(pacmanPosition.x)) * 100 / 50}%, ${(pacmanPosition.y - Math.round(pacmanPosition.y)) * 100 / 28}%)`;
-
-            
-            const dots = document.querySelectorAll('.dot');
-            dots.forEach(dot => {
-                const dotCol = parseInt(dot.style.gridColumn);
-                const dotRow = parseInt(dot.style.gridRow);
-                if (dotCol === Math.round(pacmanPosition.x) && dotRow === Math.round(pacmanPosition.y)) {
-                    dot.remove(); 
+                if (canMoveTo(Math.round(pacmanPosition.x) + queuedDirection.x, Math.round(pacmanPosition.y) + queuedDirection.y)) {
+                    direction = queuedDirection;
+                    queuedDirection = { x: 0, y: 0 };
                 }
-            });
+            }
 
-            lastTimestamp = timestamp; 
-            requestAnimationFrame(movePacman); 
+            const nextX = pacmanPosition.x + direction.x * distance;
+            const nextY = pacmanPosition.y + direction.y * distance;
+
+            if (canMoveTo(nextX, nextY)) {
+                pacmanPosition.x = nextX;
+                pacmanPosition.y = nextY;
+
+                if (pacmanPosition.x < 1) {
+                    pacmanPosition.x = 28;
+                } else if (pacmanPosition.x > 28) {
+                    pacmanPosition.x = 1;
+                }
+
+                pacmanPosition.x = Math.max(1, Math.min(28, pacmanPosition.x));
+                pacmanPosition.y = Math.max(1, Math.min(31, pacmanPosition.y));
+
+                pacman.style.gridColumn = Math.round(pacmanPosition.x);
+                pacman.style.gridRow = Math.round(pacmanPosition.y);
+                pacman.style.transform = `translate(${(pacmanPosition.x - Math.round(pacmanPosition.x)) * 100 / 50}%, ${(pacmanPosition.y - Math.round(pacmanPosition.y)) * 100 / 28}%)`;
+
+                const dots = document.querySelectorAll('.dot');
+                dots.forEach(dot => {
+                    const dotCol = parseInt(dot.style.gridColumn);
+                    const dotRow = parseInt(dot.style.gridRow);
+                    if (dotCol === Math.round(pacmanPosition.x) && dotRow === Math.round(pacmanPosition.y)) {
+                        dot.remove();
+                        score += 10;
+                        scoreElement.textContent = score; 
+                        scoreElement.textContent = score; 
+                    }
+                });
+
+                if (checkWinCondition()) {
+                    return;
+                }
+            } else {
+                direction = { x: 0, y: 0 };
+            }
+
+            lastTimestamp = timestamp;
+            requestAnimationFrame(movePacman);
         }
 
         document.addEventListener('keydown', (event) => {
             switch (event.key) {
                 case 'ArrowUp':
-                    direction = { x: 0, y: -1 };
+                    queuedDirection = { x: 0, y: -1 };
                     break;
                 case 'ArrowDown':
-                    direction = { x: 0, y: 1 };
+                    queuedDirection = { x: 0, y: 1 };
                     break;
                 case 'ArrowLeft':
-                    direction = { x: -1, y: 0 };
+                    queuedDirection = { x: -1, y: 0 };
                     break;
                 case 'ArrowRight':
-                    direction = { x: 1, y: 0 };
+                    queuedDirection = { x: 1, y: 0 };
                     break;
             }
         });
 
-        // Initiera spelet
         createDots();
         createWalls();
-        requestAnimationFrame(movePacman); // Starta animationen
+        requestAnimationFrame(movePacman);
     </script>
+    <script>
+    const ghost = document.createElement('div');
+    ghost.id = 'ghost';
+    ghost.style.width = '100%';
+    ghost.style.height = '100%';
+    ghost.style.backgroundColor = 'red';
+    ghost.style.borderRadius = '50%';
+    gameArea.appendChild(ghost);
+
+    let ghostPosition = { x: 14, y: 15 }; // Startposition för spöket
+    const ghostSpeed = 3; // Hastighet för spöket
+    let lastGhostTimestamp = 0; // Separat tidsstämpel för spöket
+    let isChasing = false; // Om spöket jagar Pacman
+    const chaseDelay = 10000; // Tid innan spöket börjar jaga (i millisekunder)
+
+    // Fördefinierat mönster för spökets rörelse
+    const ghostPattern = [
+        { x: 0, y: -1 }, // Upp
+        { x: -1, y: 0 }, // Höger
+        { x: 0, y: 1 }, // Ner
+    ];
+    let patternIndex = 0;
+    let queuedGhostDirection = { x: 0, y: 0 }; 
+    let ghostDirectionCooldown = 0.1; 
+    let lastDirectionChange = 0; 
+    let lastValidDirection = { x: 0, y: 0 }; 
+
+    function moveGhost(timestamp) {
+        if (!lastGhostTimestamp) {
+            lastGhostTimestamp = timestamp;
+        }
+
+        const deltaTime = (timestamp - lastGhostTimestamp) / 1000;
+        const distance = ghostSpeed * deltaTime;
+
+        let direction = { x: 0, y: 0 };
+
+        if (!isChasing) {
+            // Rörelse enligt mönster
+            direction = ghostPattern[patternIndex];
+
+            const nextGhostX = Math.round(ghostPosition.x) + direction.x;
+            const nextGhostY = Math.round(ghostPosition.y) + direction.y;
+
+            // Om riktningen inte är giltig, byt till nästa riktning i mönstret
+            if (!canMoveTo(nextGhostX, nextGhostY)) {
+                let attempts = 0; // Förhindra oändlig loop
+                do {
+                    patternIndex = (patternIndex + 1) % ghostPattern.length;
+                    direction = ghostPattern[patternIndex];
+                    attempts++;
+                } while (
+                    !canMoveTo(
+                        Math.round(ghostPosition.x) + direction.x,
+                        Math.round(ghostPosition.y) + direction.y
+                    ) && attempts < ghostPattern.length
+                );
+
+                // Om ingen giltig riktning hittas, använd senaste giltiga riktning
+                if (attempts >= ghostPattern.length) {
+                    direction = lastValidDirection;
+                }
+            }
+        } else {
+            // Jaga Pacman
+            const dx = pacmanPosition.x - ghostPosition.x;
+            const dy = pacmanPosition.y - ghostPosition.y;
+
+            if (Math.abs(dx) > Math.abs(dy)) {
+                direction.x = dx > 0 ? 1 : -1;
+            } else {
+                direction.y = dy > 0 ? 1 : -1;
+            }
+
+            const nextGhostX = Math.round(ghostPosition.x) + direction.x;
+            const nextGhostY = Math.round(ghostPosition.y) + direction.y;
+
+            // Om riktningen inte är giltig, försök hitta en alternativ väg
+            if (!canMoveTo(nextGhostX, nextGhostY)) {
+                direction = { x: 0, y: 0 };
+                if (canMoveTo(Math.round(ghostPosition.x) + 1, Math.round(ghostPosition.y))) {
+                    direction.x = 1;
+                } else if (canMoveTo(Math.round(ghostPosition.x) - 1, Math.round(ghostPosition.y))) {
+                    direction.x = -1;
+                } else if (canMoveTo(Math.round(ghostPosition.x), Math.round(ghostPosition.y) + 1)) {
+                    direction.y = 1;
+                } else if (canMoveTo(Math.round(ghostPosition.x), Math.round(ghostPosition.y) - 1)) {
+                    direction.y = -1;
+                } else {
+                    // Om ingen riktning är giltig, använd senaste giltiga riktning
+                    direction = lastValidDirection;
+                }
+            }
+        }
+
+        // Om riktningen är giltig, uppdatera senaste giltiga riktning
+        const nextX = Math.round(ghostPosition.x) + direction.x;
+        const nextY = Math.round(ghostPosition.y) + direction.y;
+        if (canMoveTo(nextX, nextY)) {
+            lastValidDirection = direction;
+        }
+
+        // Uppdatera spökets position
+        ghostPosition.x += direction.x * distance;
+        ghostPosition.y += direction.y * distance;
+
+        ghost.style.gridColumn = Math.round(ghostPosition.x);
+        ghost.style.gridRow = Math.round(ghostPosition.y);
+        ghost.style.transform = `translate(-50%, -50%)`;
+
+        // Kontrollera om spöket fångar Pacman
+        if (
+            Math.round(ghostPosition.x) === Math.round(pacmanPosition.x) &&
+            Math.round(ghostPosition.y) === Math.round(pacmanPosition.y)
+        ) {
+            alert('Game Over! Spöket fångade Pacman!');
+            return; // Stoppa spelet
+        }
+
+        lastGhostTimestamp = timestamp;
+        requestAnimationFrame(moveGhost);
+    }
+
+    // Växla till jaktläge efter en viss tid
+    setTimeout(() => {
+        isChasing = true;
+    }, chaseDelay);
+
+    // Starta spökets rörelse
+    requestAnimationFrame(moveGhost);
+</script>
 </body>
 </html>
