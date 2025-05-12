@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="sv">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -65,6 +65,14 @@
             width: 20px;
             height: 20px;
         }
+        #ghost {
+            width: 15px;
+            height: 15px; 
+            background-color: red;
+            border-radius: 50%; 
+            transform: translate(15%, 15%);
+            position: absolute;
+        }
     </style>
 </head>
 <body>
@@ -85,7 +93,7 @@
         let queuedDirection = { x: 0, y: 0 }; 
         const moveSpeed = 4; 
         let lastTimestamp = 0; 
-        let score = 0; // Variabel för att hålla reda på poängen
+        let score = 0; 
 
         const map = [
             'WWWWWWWWWWWWWWWWWWWWWWWWWWWW',
@@ -152,6 +160,13 @@
         function canMoveTo(x, y) {
             const col = Math.round(x);
             const row = Math.round(y);
+
+            // Kontrollera om positionen är inom spelområdet
+            if (col < 1 || col > 28 || row < 1 || row > 31) {
+                return false;
+            }
+
+            // Kontrollera om positionen inte är en vägg
             return map[row - 1] && map[row - 1][col - 1] !== 'W';
         }
 
@@ -249,10 +264,6 @@
     <script>
     const ghost = document.createElement('div');
     ghost.id = 'ghost';
-    ghost.style.width = '100%';
-    ghost.style.height = '100%';
-    ghost.style.backgroundColor = 'red';
-    ghost.style.borderRadius = '50%';
     gameArea.appendChild(ghost);
 
     let ghostPosition = { x: 14, y: 15 }; // Startposition för spöket
@@ -264,8 +275,11 @@
     // Fördefinierat mönster för spökets rörelse
     const ghostPattern = [
         { x: 0, y: -1 }, // Upp
-        { x: -1, y: 0 }, // Höger
-        { x: 0, y: 1 }, // Ner
+        { x: 0, y: -1 }, // Upp
+        { x: 0, y: -1 }, // Upp
+        { x: 0, y: -1 }, // Upp
+        { x: 1, y: 0 },  // Höger
+
     ];
     let patternIndex = 0;
     let queuedGhostDirection = { x: 0, y: 0 }; 
@@ -283,69 +297,46 @@
 
         let direction = { x: 0, y: 0 };
 
-        if (!isChasing) {
-            // Rörelse enligt mönster
-            direction = ghostPattern[patternIndex];
+        // Beräkna riktningen mot Pacman
+        const dx = pacmanPosition.x - ghostPosition.x;
+        const dy = pacmanPosition.y - ghostPosition.y;
 
-            const nextGhostX = Math.round(ghostPosition.x) + direction.x;
-            const nextGhostY = Math.round(ghostPosition.y) + direction.y;
-
-            // Om riktningen inte är giltig, byt till nästa riktning i mönstret
-            if (!canMoveTo(nextGhostX, nextGhostY)) {
-                let attempts = 0; // Förhindra oändlig loop
-                do {
-                    patternIndex = (patternIndex + 1) % ghostPattern.length;
-                    direction = ghostPattern[patternIndex];
-                    attempts++;
-                } while (
-                    !canMoveTo(
-                        Math.round(ghostPosition.x) + direction.x,
-                        Math.round(ghostPosition.y) + direction.y
-                    ) && attempts < ghostPattern.length
-                );
-
-                // Om ingen giltig riktning hittas, använd senaste giltiga riktning
-                if (attempts >= ghostPattern.length) {
-                    direction = lastValidDirection;
-                }
-            }
+        if (Math.abs(dx) > Math.abs(dy)) {
+            direction.x = dx > 0 ? 1 : -1;
         } else {
-            // Jaga Pacman
-            const dx = pacmanPosition.x - ghostPosition.x;
-            const dy = pacmanPosition.y - ghostPosition.y;
-
-            if (Math.abs(dx) > Math.abs(dy)) {
-                direction.x = dx > 0 ? 1 : -1;
-            } else {
-                direction.y = dy > 0 ? 1 : -1;
-            }
-
-            const nextGhostX = Math.round(ghostPosition.x) + direction.x;
-            const nextGhostY = Math.round(ghostPosition.y) + direction.y;
-
-            // Om riktningen inte är giltig, försök hitta en alternativ väg
-            if (!canMoveTo(nextGhostX, nextGhostY)) {
-                direction = { x: 0, y: 0 };
-                if (canMoveTo(Math.round(ghostPosition.x) + 1, Math.round(ghostPosition.y))) {
-                    direction.x = 1;
-                } else if (canMoveTo(Math.round(ghostPosition.x) - 1, Math.round(ghostPosition.y))) {
-                    direction.x = -1;
-                } else if (canMoveTo(Math.round(ghostPosition.x), Math.round(ghostPosition.y) + 1)) {
-                    direction.y = 1;
-                } else if (canMoveTo(Math.round(ghostPosition.x), Math.round(ghostPosition.y) - 1)) {
-                    direction.y = -1;
-                } else {
-                    // Om ingen riktning är giltig, använd senaste giltiga riktning
-                    direction = lastValidDirection;
-                }
-            }
+            direction.y = dy > 0 ? 1 : -1;
         }
 
-        // Om riktningen är giltig, uppdatera senaste giltiga riktning
-        const nextX = Math.round(ghostPosition.x) + direction.x;
-        const nextY = Math.round(ghostPosition.y) + direction.y;
-        if (canMoveTo(nextX, nextY)) {
-            lastValidDirection = direction;
+        let nextGhostX = Math.round(ghostPosition.x) + direction.x;
+        let nextGhostY = Math.round(ghostPosition.y) + direction.y;
+
+        // Kontrollera om spöket kan röra sig i den riktningen
+        if (!canMoveTo(nextGhostX, nextGhostY)) {
+            // Om riktningen är blockerad, försök hitta en alternativ väg
+            const possibleDirections = [
+                { x: 1, y: 0 },  // Höger
+                { x: -1, y: 0 }, // Vänster
+                { x: 0, y: 1 },  // Ner
+                { x: 0, y: -1 }  // Upp
+            ];
+
+            let foundPath = false;
+
+            for (const altDirection of possibleDirections) {
+                const altNextX = Math.round(ghostPosition.x) + altDirection.x;
+                const altNextY = Math.round(ghostPosition.y) + altDirection.y;
+
+                if (canMoveTo(altNextX, altNextY)) {
+                    direction = altDirection;
+                    foundPath = true;
+                    break;
+                }
+            }
+
+            if (!foundPath) {
+                // Om ingen väg är möjlig, stanna kvar
+                direction = { x: 0, y: 0 };
+            }
         }
 
         // Uppdatera spökets position
@@ -354,7 +345,6 @@
 
         ghost.style.gridColumn = Math.round(ghostPosition.x);
         ghost.style.gridRow = Math.round(ghostPosition.y);
-        ghost.style.transform = `translate(-50%, -50%)`;
 
         // Kontrollera om spöket fångar Pacman
         if (
