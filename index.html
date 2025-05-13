@@ -61,7 +61,7 @@
             align-self: center;
         }
         .wall {
-            background-color: blue;
+            background-color: rgb(0, 0, 142);
             width: 20px;
             height: 20px;
         }
@@ -73,9 +73,17 @@
             transform: translate(15%, 15%);
             position: absolute;
         }
+        #ghost2, #ghost3, #ghost4 {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            position: absolute;
+            transform: translate(15%, 15%);
+        }
     </style>
 </head>
 <body>
+     <script src="pinkghost.js"></script>
     <div id="scoreContainer">
         <p>Poäng: <span id="score">0</span></p>
     </div>
@@ -266,28 +274,69 @@
     ghost.id = 'ghost';
     gameArea.appendChild(ghost);
 
+    const ghost2 = document.createElement('div');
+    ghost2.id = 'ghost2';
+    ghost2.style.backgroundColor = 'pink'; // Unik färg för spöke 2
+    ghost2.style.gridColumn = '13'; // Startkolumn
+    ghost2.style.gridRow = '15'; // Startrad
+    gameArea.appendChild(ghost2);
+
+    const ghost3 = document.createElement('div');
+    ghost3.id = 'ghost3';
+    ghost3.style.backgroundColor = 'cyan'; // Unik färg för spöke 3
+    ghost3.style.gridColumn = '15'; // Startkolumn
+    ghost3.style.gridRow = '15'; // Startrad
+    gameArea.appendChild(ghost3);
+
+    const ghost4 = document.createElement('div');
+    ghost4.id = 'ghost4';
+    ghost4.style.backgroundColor = 'orange'; // Unik färg för spöke 4
+    ghost4.style.gridColumn = '16'; // Startkolumn
+    ghost4.style.gridRow = '15'; // Startrad
+    gameArea.appendChild(ghost4);
+
     let ghostPosition = { x: 14, y: 15 }; // Startposition för spöket
-    const ghostSpeed = 3; // Hastighet för spöket
+    const ghostSpeed = 2; // Hastighet för spöket
     let lastGhostTimestamp = 0; // Separat tidsstämpel för spöket
     let isChasing = false; // Om spöket jagar Pacman
-    const chaseDelay = 10000; // Tid innan spöket börjar jaga (i millisekunder)
+    const chaseDelay = 5000;
 
-    // Fördefinierat mönster för spökets rörelse
-    const ghostPattern = [
-        { x: 0, y: -1 }, // Upp
-        { x: 0, y: -1 }, // Upp
-        { x: 0, y: -1 }, // Upp
-        { x: 0, y: -1 }, // Upp
-        { x: 1, y: 0 },  // Höger
+    function findShortestPath(start, target) {
+        const queue = [[start]];
+        const visited = new Set();
+        visited.add(`${start.x},${start.y}`);
 
-    ];
-    let patternIndex = 0;
-    let queuedGhostDirection = { x: 0, y: 0 }; 
-    let ghostDirectionCooldown = 0.1; 
-    let lastDirectionChange = 0; 
-    let lastValidDirection = { x: 0, y: 0 }; 
+        while (queue.length > 0) {
+            const path = queue.shift();
+            const { x, y } = path[path.length - 1];
 
-    function moveGhost(timestamp) {
+            if (x === target.x && y === target.y) {
+                return path;
+            }
+
+            const directions = [
+                { x: x + 1, y: y },
+                { x: x - 1, y: y },
+                { x: x, y: y + 1 },
+                { x: x, y: y - 1 }
+
+            ];
+
+            for (const dir of directions) {
+                if (
+                    canMoveTo(dir.x, dir.y) &&
+                    !visited.has(`${dir.x},${dir.y}`)
+                ) {
+                    visited.add(`${dir.x},${dir.y}`);
+                    queue.push([...path, dir]);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    function moveGhost(ghost, ghostPosition, timestamp, lastGhostTimestamp) {
         if (!lastGhostTimestamp) {
             lastGhostTimestamp = timestamp;
         }
@@ -297,49 +346,34 @@
 
         let direction = { x: 0, y: 0 };
 
-        // Beräkna riktningen mot Pacman
-        const dx = pacmanPosition.x - ghostPosition.x;
-        const dy = pacmanPosition.y - ghostPosition.y;
+        if (isChasing) {
+            const path = findShortestPath(
+                { x: Math.round(ghostPosition.x), y: Math.round(ghostPosition.y) },
+                { x: Math.round(pacmanPosition.x), y: Math.round(pacmanPosition.y) }
+            );
 
-        if (Math.abs(dx) > Math.abs(dy)) {
-            direction.x = dx > 0 ? 1 : -1;
+            if (path && path.length > 1) {
+                const nextStep = path[1];
+                direction.x = nextStep.x - Math.round(ghostPosition.x);
+                direction.y = nextStep.y - Math.round(ghostPosition.y);
+            }
         } else {
-            direction.y = dy > 0 ? 1 : -1;
-        }
-
-        let nextGhostX = Math.round(ghostPosition.x) + direction.x;
-        let nextGhostY = Math.round(ghostPosition.y) + direction.y;
-
-        // Kontrollera om spöket kan röra sig i den riktningen
-        if (!canMoveTo(nextGhostX, nextGhostY)) {
-            // Om riktningen är blockerad, försök hitta en alternativ väg
+ 
             const possibleDirections = [
-                { x: 1, y: 0 },  // Höger
-                { x: -1, y: 0 }, // Vänster
-                { x: 0, y: 1 },  // Ner
-                { x: 0, y: -1 }  // Upp
+                
             ];
 
-            let foundPath = false;
+            const validDirections = possibleDirections.filter(dir => {
+                const nextX = Math.round(ghostPosition.x) + dir.x;
+                const nextY = Math.round(ghostPosition.y) + dir.y;
+                return canMoveTo(nextX, nextY);
+            });
 
-            for (const altDirection of possibleDirections) {
-                const altNextX = Math.round(ghostPosition.x) + altDirection.x;
-                const altNextY = Math.round(ghostPosition.y) + altDirection.y;
-
-                if (canMoveTo(altNextX, altNextY)) {
-                    direction = altDirection;
-                    foundPath = true;
-                    break;
-                }
-            }
-
-            if (!foundPath) {
-                // Om ingen väg är möjlig, stanna kvar
-                direction = { x: 0, y: 0 };
+            if (validDirections.length > 0) {
+                direction = validDirections[Math.floor(Math.random() * validDirections.length)];
             }
         }
 
-        // Uppdatera spökets position
         ghostPosition.x += direction.x * distance;
         ghostPosition.y += direction.y * distance;
 
@@ -356,7 +390,7 @@
         }
 
         lastGhostTimestamp = timestamp;
-        requestAnimationFrame(moveGhost);
+        requestAnimationFrame((newTimestamp) => moveGhost(ghost, ghostPosition, newTimestamp, lastGhostTimestamp));
     }
 
     // Växla till jaktläge efter en viss tid
@@ -365,7 +399,98 @@
     }, chaseDelay);
 
     // Starta spökets rörelse
-    requestAnimationFrame(moveGhost);
+    requestAnimationFrame((timestamp) => moveGhost(ghost, ghostPosition, timestamp, 0));
+
+    // Spöke 2: Följer en specifik runda
+    function moveGhostInLoop(ghost, path, ghostPosition, timestamp, lastGhostTimestamp, speed) {
+        if (!lastGhostTimestamp) {
+            lastGhostTimestamp = timestamp;
+        }
+
+        const deltaTime = (timestamp - lastGhostTimestamp) / 1000;
+        const distance = speed * deltaTime;
+
+        // Hämta nästa position i rundan
+        const nextStep = path[0]; // Ta nästa steg i rundan
+        const dx = nextStep.x - ghostPosition.x;
+        const dy = nextStep.y - ghostPosition.y;
+
+        // Flytta spöket mot nästa steg
+        const stepDistance = Math.sqrt(dx * dx + dy * dy);
+        if (stepDistance <= distance) {
+            // Om spöket når nästa steg, uppdatera positionen och gå till nästa steg
+            ghostPosition.x = nextStep.x;
+            ghostPosition.y = nextStep.y;
+            path.push(path.shift()); // Flytta det aktuella steget till slutet av listan
+        } else {
+            // Annars, flytta spöket proportionellt mot nästa steg
+            ghostPosition.x += (dx / stepDistance) * distance;
+            ghostPosition.y += (dy / stepDistance) * distance;
+        }
+
+        ghost.style.gridColumn = Math.round(ghostPosition.x);
+        ghost.style.gridRow = Math.round(ghostPosition.y);
+
+        lastGhostTimestamp = timestamp;
+        requestAnimationFrame((newTimestamp) =>
+            moveGhostInLoop(ghost, path, ghostPosition, newTimestamp, lastGhostTimestamp, speed)
+        );
+    }
+
+    // Spöke 3: Försöker ta Pacman framifrån
+    function moveGhostPredictive(ghost, ghostPosition, timestamp, lastGhostTimestamp, speed) {
+        if (!lastGhostTimestamp) {
+            lastGhostTimestamp = timestamp;
+        }
+
+        const deltaTime = (timestamp - lastGhostTimestamp) / 1000;
+        const distance = speed * deltaTime;
+
+        const predictedPosition = {
+            x: pacmanPosition.x + direction.x * 2,
+            y: pacmanPosition.y + direction.y * 2,
+        };
+
+        const path = findShortestPath(
+            { x: Math.round(ghostPosition.x), y: Math.round(ghostPosition.y) },
+            { x: Math.round(predictedPosition.x), y: Math.round(predictedPosition.y) }
+        );
+
+        let direction = { x: 0, y: 0 };
+        if (path && path.length > 1) {
+            const nextStep = path[1];
+            direction.x = nextStep.x - Math.round(ghostPosition.x);
+            direction.y = nextStep.y - Math.round(ghostPosition.y);
+        }
+
+        ghostPosition.x += direction.x * distance;
+        ghostPosition.y += direction.y * distance;
+
+        ghost.style.gridColumn = Math.round(ghostPosition.x);
+        ghost.style.gridRow = Math.round(ghostPosition.y);
+
+        lastGhostTimestamp = timestamp;
+        requestAnimationFrame((newTimestamp) =>
+            moveGhostPredictive(ghost, ghostPosition, newTimestamp, lastGhostTimestamp, speed)
+        );
+    }
+
+    // Starta rörelse för varje spöke med olika logik
+    requestAnimationFrame((timestamp) => moveGhost(ghost, ghostPosition, timestamp, 0)); // Spöke 1
+
+    setTimeout(() => {
+        const ghostPosition3 = { x: 15, y: 15 };
+        requestAnimationFrame((timestamp) =>
+            moveGhostPredictive(ghost3, ghostPosition3, timestamp, 0, 4) // Snabbare än Pacman
+        );
+    }, 30000);
+
+    setTimeout(() => {
+        const ghostPosition4 = { x: 16, y: 15 };
+        requestAnimationFrame((timestamp) =>
+            moveGhost(ghost4, ghostPosition4, timestamp, 4) // Slumpmässig patrullering
+        );
+    }, 45000);
 </script>
 </body>
 </html>
