@@ -1,7 +1,5 @@
-    
-    
-    setTimeout(() => {
-        const ghostPosition2 = { x: 13, y: 15 }; // Startposition för rosa spöket
+
+        setTimeout(() => {
         const path = [
             { x: 13, y: 15 },
             { x: 13, y: 14 },
@@ -60,9 +58,8 @@
             { x: 22, y: 24 },
             { x: 7, y: 24 },
             { x: 7, y: 6 },
-            
-        ]; // Fördefinierad runda
+        ];
         requestAnimationFrame((timestamp) =>
-            moveGhostInLoop(ghost2, path, ghostPosition2, timestamp, 0, 2) // Hastighet 2
+            moveGhostInLoop(ghost2, path, ghostPosition2, timestamp, 0, 2)
         );
     }, 15000);
