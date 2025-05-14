@@ -4,83 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pacman</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #000;
-            position: relative; 
-            overflow: hidden;
-        }
-        #scoreContainer {
-            position: absolute;
-            top: 10%;
-            left: 15%; 
-            color: white;
-            font-size: 25px;
-            font-family: Arial, sans-serif;
-            background-color: rgba(255, 255, 255, 0.345);
-            padding-left: 30px;
-            padding-right: 30px;
-            border-radius: 10px;
-            width: auto; 
-        }
-        #gameContainer {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 560px; /* Samma bredd som spelområdet */
-            height: 620px; /* Samma höjd som spelområdet */
-        }
-        #gameArea {
-            scale: 1.5; /* Skala upp spelområdet */
-            display: grid;
-            width: 560px;
-            height: 620px;
-            grid-template-columns: repeat(28, 20px);
-            grid-template-rows: repeat(31, 20px);
-            background-color: rgb(0, 0, 0);
-            position: relative;
-        }
-        #pacman {
-            width: 100%; 
-            height: 100%;
-            background-color: yellow;
-            border-radius: 50%;
-        }
-        .dot {
-            width: 20%; 
-            height: 20%;
-            background-color: rgb(255, 191, 191);
-            border-radius: 50%;
-            justify-self: center;
-            align-self: center;
-        }
-        .wall {
-            background-color: rgb(0, 0, 142);
-            width: 20px;
-            height: 20px;
-        }
-        #ghost {
-            width: 15px;
-            height: 15px; 
-            background-color: red;
-            border-radius: 50%; 
-            transform: translate(15%, 15%);
-            position: absolute;
-        }
-        #ghost2, #ghost3, #ghost4 {
-            width: 15px;
-            height: 15px;
-            border-radius: 50%;
-            position: absolute;
-            transform: translate(15%, 15%);
-        }
-    </style>
+    <link rel="stylesheet" href="style.css"> <!-- Lägg till denna rad -->
 </head>
 <body>
      <script src="pinkghost.js"></script>
@@ -282,7 +206,9 @@
         createDots();
         createWalls();
         requestAnimationFrame(movePacman);
+
     </script>
+    
     <script>
     const ghost = document.createElement('div');
     ghost.id = 'ghost';
@@ -290,32 +216,32 @@
 
     const ghost2 = document.createElement('div');
     ghost2.id = 'ghost2';
-    ghost2.style.backgroundColor = 'pink'; // Unik färg för spöke 2
-    ghost2.style.gridColumn = '13'; // Startkolumn
-    ghost2.style.gridRow = '15'; // Startrad
+    ghost2.style.backgroundColor = 'pink'; 
+    ghost2.style.gridColumn = '13';
+    ghost2.style.gridRow = '15';
     gameArea.appendChild(ghost2);
 
     const ghost3 = document.createElement('div');
     ghost3.id = 'ghost3';
-    ghost3.style.backgroundColor = 'cyan'; // Unik färg för spöke 3
-    ghost3.style.gridColumn = '15'; // Startkolumn
-    ghost3.style.gridRow = '15'; // Startrad
+    ghost3.style.backgroundColor = 'cyan'; 
+    ghost3.style.gridColumn = '15'; 
+    ghost3.style.gridRow = '15';
     gameArea.appendChild(ghost3);
 
     const ghost4 = document.createElement('div');
     ghost4.id = 'ghost4';
-    ghost4.style.backgroundColor = 'orange'; // Unik färg för spöke 4
-    ghost4.style.gridColumn = '16'; // Startkolumn
-    ghost4.style.gridRow = '15'; // Startrad
+    ghost4.style.backgroundColor = 'orange'
+    ghost4.style.gridColumn = '16';
+    ghost4.style.gridRow = '15'; 
     gameArea.appendChild(ghost4);
 
-    let ghostPosition = { x: 14, y: 15 }; // Startposition för spöket
+    let ghostPosition = { x: 14, y: 15 }; 
     let ghostPosition2 = { x: 13, y: 15 };
     let ghostPosition3 = { x: 15, y: 15 };
     let ghostPosition4 = { x: 16, y: 15 };
-    const ghostSpeed = 2; // Hastighet för spöket
-    let lastGhostTimestamp = 0; // Separat tidsstämpel för spöket
-    let isChasing = false; // Om spöket jagar Pacman
+    const ghostSpeed = 4; 
+    let lastGhostTimestamp = 0; 
+    let isChasing = false; 
     const chaseDelay = 5000;
 
     function findShortestPath(start, target) {
@@ -336,7 +262,6 @@
                 { x: x - 1, y: y },
                 { x: x, y: y + 1 },
                 { x: x, y: y - 1 }
-
             ];
 
             for (const dir of directions) {
