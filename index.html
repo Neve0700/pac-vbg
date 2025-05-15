@@ -9,7 +9,7 @@
 <body>
      <script src="pinkghost.js"></script>
     <div id="scoreContainer">
-        <p>Poäng: <span id="score">0</span></p>
+        <p>Poäng: <span id="score">0</span> | Liv: <span id="lives">3</span></p>
     </div>
     <div id="gameContainer">
         <div id="gameArea">
@@ -26,12 +26,14 @@
         const moveSpeed = 4; 
         let lastTimestamp = 0; 
         let score = 0; 
+        let lives = 3;
+        const livesElement = document.querySelector('#lives');
 
         const map = [
             'WWWWWWWWWWWWWWWWWWWWWWWWWWWW',
             'W............WW............W',
-            'W.WWWW.WwwWW.WW.WWWWW.WWWW.W',
-            'W*WWWW.WWWWW.WW.WWWWW.WWWW*W',
+            'W.WWWW.WWWWW.WW.WWWWW.WWWW.W',
+            'W.WWWW.WWWWW.WW.WWWWW.WWWW.W',
             'W.WWWW.WWWWW.WW.WWWWW.WWWW.W',
             'W..........................W',
             'W.WWWW.WW.WWWWWWWW.WW.WWWW.W',
@@ -167,14 +169,14 @@
 
                 // Kontrollera kollision med alla spöken
                 const ghostPositions = [
-                    ghostPosition, // röd
-                    ghostPosition2, // rosa
-                    ghostPosition3, // blå
-                    ghostPosition4  // orange
+                    { pos: ghostPosition, id: 1 },   // röd
+                    { pos: ghostPosition2, id: 2 },  // rosa
+                    { pos: ghostPosition3, id: 3 },  // blå
+                    { pos: ghostPosition4, id: 4 }   // orange
                 ];
-                for (const pos of ghostPositions) {
-                    if (pos && checkGhostCollision(pos)) {
-                        alert('Game Over! Spöket fångade Pacman!');
+                for (const ghostObj of ghostPositions) {
+                    if (ghostObj.pos && checkGhostCollision(ghostObj.pos)) {
+                        handlePacmanDeath(ghostObj.id);
                         return;
                     }
                 }
@@ -205,11 +207,12 @@
 
         createDots();
         createWalls();
-        requestAnimationFrame(movePacman);
+        pacmanAnimationId = requestAnimationFrame(movePacman);
 
     </script>
     
     <script>
+    
     const ghost = document.createElement('div');
     ghost.id = 'ghost';
     gameArea.appendChild(ghost);
@@ -241,8 +244,16 @@
     let ghostPosition4 = { x: 16, y: 15 };
     const ghostSpeed = 4; 
     let lastGhostTimestamp = 0; 
+    let lastGhost3Timestamp = 0;
+    let lastGhost4Timestamp = 0;
     let isChasing = false; 
     const chaseDelay = 5000;
+
+    // Lägg till dessa variabler högst upp i scriptet för att kunna avbryta animationerna:
+    let ghostAnimationId = null;
+    let ghost3AnimationId = null;
+    let ghost4AnimationId = null;
+    let pacmanAnimationId = null;
 
     function findShortestPath(start, target) {
         const queue = [[start]];
@@ -327,14 +338,9 @@
         ghost.style.gridColumn = Math.round(ghostPosition.x);
         ghost.style.gridRow = Math.round(ghostPosition.y);
 
-        // Kontrollera kollision med Pacman
-        if (checkGhostCollision(ghostPosition)) {
-            alert('Game Over! Spöket fångade Pacman!');
-            return;
-        }
-
-        lastGhostTimestamp = timestamp;
-        requestAnimationFrame((newTimestamp) => moveGhost(ghost, ghostPosition, newTimestamp, lastGhostTimestamp));
+        // Spara till den globala variabeln!
+        window.lastGhostTimestamp = timestamp;
+        ghostAnimationId = requestAnimationFrame((newTimestamp) => moveGhost(ghost, ghostPosition, newTimestamp, window.lastGhostTimestamp));
     }
 
     // Modifiera moveGhostInLoop
@@ -365,7 +371,7 @@
 
         // Kontrollera kollision med Pacman
         if (checkGhostCollision(ghostPosition)) {
-            alert('Game Over! Spöket fångade Pacman!');
+            handlePacmanDeath();
             return;
         }
 
@@ -407,15 +413,48 @@
         ghost.style.gridColumn = Math.round(ghostPosition.x);
         ghost.style.gridRow = Math.round(ghostPosition.y);
 
-        // Kontrollera kollision med Pacman
-        if (checkGhostCollision(ghostPosition)) {
-            alert('Game Over! Spöket fångade Pacman!');
-            return;
+        // Spara till den globala variabeln!
+        window.lastGhost3Timestamp = timestamp;
+        ghost3AnimationId = requestAnimationFrame((newTimestamp) =>
+            moveGhostPredictive(ghost, ghostPosition, newTimestamp, window.lastGhost3Timestamp, speed)
+        );
+    }
+
+    function moveGhost4(ghost, ghostPosition, timestamp, lastGhostTimestamp) {
+        if (!lastGhostTimestamp) {
+            lastGhostTimestamp = timestamp;
         }
 
-        lastGhostTimestamp = timestamp;
-        requestAnimationFrame((newTimestamp) =>
-            moveGhostPredictive(ghost, ghostPosition, newTimestamp, lastGhostTimestamp, speed)
+        const deltaTime = (timestamp - lastGhostTimestamp) / 1000;
+        const distance = ghostSpeed * deltaTime;
+
+        let direction = { x: 0, y: 0 };
+
+        if (isChasing) {
+            const path = findShortestPath(
+                { x: Math.round(ghostPosition.x), y: Math.round(ghostPosition.y) },
+                { x: Math.round(pacmanPosition.x), y: Math.round(pacmanPosition.y) }
+            );
+
+            if (path && path.length > 1) {
+                const nextStep = path[1];
+                direction.x = nextStep.x - Math.round(ghostPosition.x);
+                direction.y = nextStep.y - Math.round(ghostPosition.y);
+            }
+        } else {
+            // Här kan du lägga till random-rörelse om du vill
+        }
+
+        ghostPosition.x += direction.x * distance;
+        ghostPosition.y += direction.y * distance;
+
+        ghost.style.gridColumn = Math.round(ghostPosition.x);
+        ghost.style.gridRow = Math.round(ghostPosition.y);
+
+        // Spara till den globala variabeln!
+        window.lastGhost4Timestamp = timestamp;
+        ghost4AnimationId = requestAnimationFrame((newTimestamp) =>
+            moveGhost4(ghost, ghostPosition, newTimestamp, window.lastGhost4Timestamp)
         );
     }
 
@@ -423,19 +462,88 @@
         isChasing = true;
     }, chaseDelay);
 
-    requestAnimationFrame((timestamp) => moveGhost(ghost, ghostPosition, timestamp, 0));
-
+    ghostAnimationId = requestAnimationFrame((timestamp) => moveGhost(ghost, ghostPosition, timestamp, lastGhostTimestamp));
     setTimeout(() => {
-        requestAnimationFrame((timestamp) =>
-            moveGhostPredictive(ghost3, ghostPosition3, timestamp, 0, 4) // Snabbare än Pacman
+        ghost3AnimationId = requestAnimationFrame((timestamp) =>
+            moveGhostPredictive(ghost3, ghostPosition3, timestamp, lastGhost3Timestamp, 4)
         );
     }, 30000);
-
     setTimeout(() => {
-        requestAnimationFrame((timestamp) =>
-            moveGhost(ghost4, ghostPosition4, timestamp, 0) // Slumpmässig patrullering
+        ghost4AnimationId = requestAnimationFrame((timestamp) =>
+            moveGhost4(ghost4, ghostPosition4, timestamp, 0)
         );
     }, 45000);
+
+    function resetPositions(triggeringGhostId) {
+        // Återställ Pacman
+        pacmanPosition.x = 15;
+        pacmanPosition.y = 24;
+        direction = { x: -1, y: 0 };
+        queuedDirection = { x: 0, y: 0 };
+        pacman.style.gridColumn = Math.round(pacmanPosition.x);
+        pacman.style.gridRow = Math.round(pacmanPosition.y);
+
+        // Återställ ALLA spöken (uppdatera egenskaper, byt inte ut objekten!)
+        ghostPosition.x = 14;
+        ghostPosition.y = 15;
+        ghostPosition2.x = 13;
+        ghostPosition2.y = 15;
+        ghostPosition3.x = 15;
+        ghostPosition3.y = 15;
+        ghostPosition4.x = 16;
+        ghostPosition4.y = 15;
+        ghost.style.gridColumn = Math.round(ghostPosition.x);
+        ghost.style.gridRow = Math.round(ghostPosition.y);
+        ghost2.style.gridColumn = Math.round(ghostPosition2.x);
+        ghost2.style.gridRow = Math.round(ghostPosition2.y);
+        ghost3.style.gridColumn = Math.round(ghostPosition3.x);
+        ghost3.style.gridRow = Math.round(ghostPosition3.y);
+        ghost4.style.gridColumn = Math.round(ghostPosition4.x);
+        ghost4.style.gridRow = Math.round(ghostPosition4.y);
+
+        // Stoppa ALLA animationer
+        if (pacmanAnimationId) cancelAnimationFrame(pacmanAnimationId);
+        if (ghostAnimationId) cancelAnimationFrame(ghostAnimationId);
+        if (ghost3AnimationId) cancelAnimationFrame(ghost3AnimationId);
+        if (ghost4AnimationId) cancelAnimationFrame(ghost4AnimationId);
+
+        // Återställ tidsvariabler!
+        lastTimestamp = 0;
+        lastGhostTimestamp = 0;
+        lastGhost3Timestamp = 0;
+        lastGhost4Timestamp = 0;
+
+        // Starta om Pacman
+        pacmanAnimationId = requestAnimationFrame(movePacman);
+
+        // Starta om det röda spöket DIREKT
+        ghostAnimationId = requestAnimationFrame((timestamp) => moveGhost(ghost, ghostPosition, timestamp, 0));
+
+        // Starta om övriga spöken enligt timer
+        setTimeout(() => {
+            ghost3AnimationId = requestAnimationFrame((timestamp) =>
+                moveGhostPredictive(ghost3, ghostPosition3, timestamp, 0, 4)
+            );
+        }, 30000);
+        setTimeout(() => {
+            ghost4AnimationId = requestAnimationFrame((timestamp) =>
+                moveGhost4(ghost4, ghostPosition4, timestamp, 0)
+            );
+        }, 45000);
+    }
+
+    // Lägg till eller modifiera handlePacmanDeath så här:
+    function handlePacmanDeath(triggeringGhostId) {
+        lives--;
+        livesElement.textContent = lives;
+        if (lives <= 0) {
+            alert('Spelet är slut!');
+            location.reload();
+            return;
+        }
+        resetPositions(triggeringGhostId);
+    }
+
 </script>
 </body>
 </html>
