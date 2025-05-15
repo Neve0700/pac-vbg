@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pacman</title>
-    <link rel="stylesheet" href="style.css"> <!-- Lägg till denna rad -->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
      <script src="pinkghost.js"></script>
     <div id="scoreContainer">
-        <p>Poäng: <span id="score">0</span> | Liv: <span id="lives">3</span></p>
+        <p>Poäng: <span id="score">0</span><br><span id="lives-container"></span></p>
     </div>
     <div id="gameContainer">
         <div id="gameArea">
@@ -27,7 +27,17 @@
         let lastTimestamp = 0; 
         let score = 0; 
         let lives = 3;
-        const livesElement = document.querySelector('#lives');
+        const livesContainer = document.getElementById('lives-container');
+
+        function renderLives() {
+            livesContainer.innerHTML = '';
+            for (let i = 0; i < lives; i++) {
+                const dot = document.createElement('span');
+                dot.className = 'life-dot';
+                livesContainer.appendChild(dot);
+            }
+        }
+        renderLives();
 
         const map = [
             'WWWWWWWWWWWWWWWWWWWWWWWWWWWW',
@@ -52,7 +62,7 @@
             'WWWWWW.WW WWWWWWWW WW.WWWWWW',
             'W............WW............W',
             'W.WWWW.WWWWW.WW.WWWWW.WWWW.W',
-            'W*WWWW.WWWWW.WW.WWWWW.WWWW*W',
+            'W.WWWW.WWWWW.WW.WWWWW.WWWW.W',
             'W...WW................WW...W',
             'WWW.WW.WW.WWWWWWWW.WW.WW.WWW',
             'WWW.WW.WW.WWWWWWWW.WW.WW.WWW',
@@ -167,7 +177,6 @@
                     return;
                 }
 
-                // Kontrollera kollision med alla spöken
                 const ghostPositions = [
                     { pos: ghostPosition, id: 1 },   // röd
                     { pos: ghostPosition2, id: 2 },  // rosa
@@ -249,7 +258,6 @@
     let isChasing = false; 
     const chaseDelay = 5000;
 
-    // Lägg till dessa variabler högst upp i scriptet för att kunna avbryta animationerna:
     let ghostAnimationId = null;
     let ghost3AnimationId = null;
     let ghost4AnimationId = null;
@@ -338,12 +346,10 @@
         ghost.style.gridColumn = Math.round(ghostPosition.x);
         ghost.style.gridRow = Math.round(ghostPosition.y);
 
-        // Spara till den globala variabeln!
         window.lastGhostTimestamp = timestamp;
         ghostAnimationId = requestAnimationFrame((newTimestamp) => moveGhost(ghost, ghostPosition, newTimestamp, window.lastGhostTimestamp));
     }
 
-    // Modifiera moveGhostInLoop
     function moveGhostInLoop(ghost, path, ghostPosition, timestamp, lastGhostTimestamp, speed) {
         if (!lastGhostTimestamp) {
             lastGhostTimestamp = timestamp;
@@ -369,7 +375,6 @@
         ghost.style.gridColumn = Math.round(ghostPosition.x);
         ghost.style.gridRow = Math.round(ghostPosition.y);
 
-        // Kontrollera kollision med Pacman
         if (checkGhostCollision(ghostPosition)) {
             handlePacmanDeath();
             return;
@@ -381,7 +386,6 @@
         );
     }
 
-    // Modifiera moveGhostPredictive
     function moveGhostPredictive(ghost, ghostPosition, timestamp, lastGhostTimestamp, speed) {
         if (!lastGhostTimestamp) {
             lastGhostTimestamp = timestamp;
@@ -441,17 +445,13 @@
                 direction.x = nextStep.x - Math.round(ghostPosition.x);
                 direction.y = nextStep.y - Math.round(ghostPosition.y);
             }
-        } else {
-            // Här kan du lägga till random-rörelse om du vill
         }
-
         ghostPosition.x += direction.x * distance;
         ghostPosition.y += direction.y * distance;
 
         ghost.style.gridColumn = Math.round(ghostPosition.x);
         ghost.style.gridRow = Math.round(ghostPosition.y);
 
-        // Spara till den globala variabeln!
         window.lastGhost4Timestamp = timestamp;
         ghost4AnimationId = requestAnimationFrame((newTimestamp) =>
             moveGhost4(ghost, ghostPosition, newTimestamp, window.lastGhost4Timestamp)
@@ -475,7 +475,7 @@
     }, 45000);
 
     function resetPositions(triggeringGhostId) {
-        // Återställ Pacman
+
         pacmanPosition.x = 15;
         pacmanPosition.y = 24;
         direction = { x: -1, y: 0 };
@@ -483,7 +483,6 @@
         pacman.style.gridColumn = Math.round(pacmanPosition.x);
         pacman.style.gridRow = Math.round(pacmanPosition.y);
 
-        // Återställ ALLA spöken (uppdatera egenskaper, byt inte ut objekten!)
         ghostPosition.x = 14;
         ghostPosition.y = 15;
         ghostPosition2.x = 13;
@@ -501,25 +500,24 @@
         ghost4.style.gridColumn = Math.round(ghostPosition4.x);
         ghost4.style.gridRow = Math.round(ghostPosition4.y);
 
-        // Stoppa ALLA animationer
+
         if (pacmanAnimationId) cancelAnimationFrame(pacmanAnimationId);
         if (ghostAnimationId) cancelAnimationFrame(ghostAnimationId);
         if (ghost3AnimationId) cancelAnimationFrame(ghost3AnimationId);
         if (ghost4AnimationId) cancelAnimationFrame(ghost4AnimationId);
 
-        // Återställ tidsvariabler!
+
         lastTimestamp = 0;
         lastGhostTimestamp = 0;
         lastGhost3Timestamp = 0;
         lastGhost4Timestamp = 0;
 
-        // Starta om Pacman
+
         pacmanAnimationId = requestAnimationFrame(movePacman);
 
-        // Starta om det röda spöket DIREKT
+
         ghostAnimationId = requestAnimationFrame((timestamp) => moveGhost(ghost, ghostPosition, timestamp, 0));
 
-        // Starta om övriga spöken enligt timer
         setTimeout(() => {
             ghost3AnimationId = requestAnimationFrame((timestamp) =>
                 moveGhostPredictive(ghost3, ghostPosition3, timestamp, 0, 4)
@@ -532,10 +530,9 @@
         }, 45000);
     }
 
-    // Lägg till eller modifiera handlePacmanDeath så här:
     function handlePacmanDeath(triggeringGhostId) {
         lives--;
-        livesElement.textContent = lives;
+        renderLives();
         if (lives <= 0) {
             alert('Spelet är slut!');
             location.reload();

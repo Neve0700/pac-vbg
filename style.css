@@ -20,7 +20,7 @@ body {
     padding-left: 30px;
     padding-right: 30px;
     border-radius: 10px;
-    width: auto; 
+    width: 150px; 
 }
 #gameContainer {
     display: flex;
@@ -40,9 +40,11 @@ body {
     position: relative;
 }
 #pacman {
-    width: 100%; 
-    height: 100%;
-    background-color: yellow;
+    width: 15px; 
+    height:15px;
+    margin: 1px;
+    background-color: rgb(255, 215, 0);
+    border: 2px solid #e6c200;
     border-radius: 50%;
 }
 .dot {
@@ -60,7 +62,9 @@ body {
 }
 #ghost {
     width: 15px;
-    height: 15px; 
+    height: 15px;
+    margin: 1px;
+    margin-left: 0.4px; 
     background-color: red;
     border-radius: 50%; 
     transform: translate(15%, 15%);
@@ -70,6 +74,18 @@ body {
     width: 15px;
     height: 15px;
     border-radius: 50%;
-    position: absolute;
     transform: translate(15%, 15%);
+    position: absolute;
+}
+.life-dot {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    margin: 0 2px;
+    border-radius: 50%;
+    background: rgb(255, 215, 0);
+    border: 2px solid #e6c200;
+    position: relative;
+    top: 10px;
+    left: 40px;
 }
