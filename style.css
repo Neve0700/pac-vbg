@@ -5,7 +5,7 @@ body {
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background-color: #000;
+    background-color: #000000;
     position: relative; 
     overflow: hidden;
 }
@@ -36,7 +36,9 @@ body {
     height: 620px;
     grid-template-columns: repeat(28, 20px);
     grid-template-rows: repeat(31, 20px);
-    background-color: rgb(0, 0, 0);
+    background-image: url(asphalt.jpg);
+    background-size: cover;
+    background-position: center;
     position: relative;
 }
 #pacman {
@@ -50,7 +52,8 @@ body {
 .dot {
     width: 20%; 
     height: 20%;
-    background-color: rgb(255, 191, 191);
+    background-color: rgb(255, 255, 255);
+    border: 0.01px solid #000000;
     border-radius: 50%;
     justify-self: center;
     align-self: center;

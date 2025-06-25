@@ -41,34 +41,34 @@
 
         const map = [
             'WWWWWWWWWWWWWWWWWWWWWWWWWWWW',
-            'W............WW............W',
-            'W.WWWW.WWWWW.WW.WWWWW.WWWW.W',
-            'W.WWWW.WWWWW.WW.WWWWW.WWWW.W',
-            'W.WWWW.WWWWW.WW.WWWWW.WWWW.W',
             'W..........................W',
-            'W.WWWW.WW.WWWWWWWW.WW.WWWW.W',
-            'W.WWWW.WW.WWWWWWWW.WW.WWWW.W',
-            'W......WW....WW....WW......W',
-            'WWWWWW.WWWWW WW WWWWW.WWWWWW',
-            '     W.WWWWW WW WWWWW.W     ',
-            '     W.WW          WW.W     ',
-            '     W.WW WWW--WWW WW.W     ',
-            'WWWWWW.WW W      W WW.WWWWWW',
-            '      .   W      W   .      ',
-            'WWWWWW.WW W      W WW.WWWWWW',
-            '     W.WW WWWWWWWW WW.W     ',
-            '     W.WW          WW.W     ',
-            '     W.WW WWWWWWWW WW.W     ',
-            'WWWWWW.WW WWWWWWWW WW.WWWWWW',
-            'W............WW............W',
-            'W.WWWW.WWWWW.WW.WWWWW.WWWW.W',
-            'W.WWWW.WWWWW.WW.WWWWW.WWWW.W',
-            'W...WW................WW...W',
-            'WWW.WW.WW.WWWWWWWW.WW.WW.WWW',
-            'WWW.WW.WW.WWWWWWWW.WW.WW.WWW',
-            'W......WW....WW....WW......W',
-            'W.WWWWWWWWWW.WW.WWWWWWWWWW.W',
-            'W.WWWWWWWWWW.WW.WWWWWWWWWW.W',
+            'W.WWWWW.WWWWWW.WWWWWW.WWWW.W',
+            'W.WWWWW.WWWWWW.WWWWWW.WWWW.W',
+            'W.WWWWW.WWWWWW.WWWWWW.WWWW.W',
+            'W.WWWWW.WWWWWW.WWWWWW.WWWW.W',
+            'W.WWWWW.WWWWWW.WWWWWW.WWWW.W',
+            'W.WWWWW.WWWWWW.WWWWWW.WWWW.W',
+            'W..........................W',
+            'W.WWWWW.WWWWWW.WWWWW.WWWWW.W',
+            'W.WWWWW.WWWWWW.WWWWW.WWWWW.W',
+            'W.WWWWW.WWWWWW.WWWWW.WWWWW.W',
+            'W.WWWWW.WWWWWW.WWWWW.WWWWW.W',
+            'W .........................W',
+            'W.WWWWWW.WWWWW.WWWW.WWWWWW.W',
+            'W.WWWWWW.WWWWW.WWWW.WWWWWW.W',
+            'W.WWWWWW.WWWWW.WWWW.WWWWWW.W',
+            'W..........................W',
+            'W.WWWWW.WWWWWW.WWWWW.WWWWW.W',
+            'W.WWWWW.WWWWWW.WWWWW.WWWWW.W',
+            'W.WWWWW.WWWWWW.WWWWW.WWWWW.W',
+            'W.WWWWW.WWWWWW.WWWWW.WWWWW.W',
+            'W..........................W',
+            'W.WWWWW.WWWWWW.WWWWW.WWWWW.W',
+            'W.WWWWW.WWWWWW.WWWWW.WWWWW.W',
+            'W.WWWWW.WWWWWW.WWWWW.WWWWW.W',
+            'W.WWWWW.WWWWWW.WWWWW.WWWWW.W',
+            'W.WWWWW.WWWWWW.WWWWW.WWWWW.W',
+            'W.WWWWW.WWWWWW.WWWWW.WWWWW.W',
             'W..........................W',
             'WWWWWWWWWWWWWWWWWWWWWWWWWWWW'
         ];
@@ -145,7 +145,9 @@
             const nextY = pacmanPosition.y + direction.y * distance;
 
             if (canMoveTo(nextX, nextY)) {
-                pacmanPosition.x = nextX;
+                lerp(pacmanPosition.x, nextX);
+                
+                /* pacmanPosition.x = nextX; */
                 pacmanPosition.y = nextY;
 
                 if (pacmanPosition.x < 1) {
@@ -303,10 +305,9 @@
             Math.round(ghostPosition.x) === Math.round(pacmanPosition.x) &&
             Math.round(ghostPosition.y) === Math.round(pacmanPosition.y)
         );
-    }
+    } 
 
-    // Modifiera moveGhost
-    function moveGhost(ghost, ghostPosition, timestamp, lastGhostTimestamp) {
+    /* function moveGhost(ghost, ghostPosition, timestamp, lastGhostTimestamp) {
         if (!lastGhostTimestamp) {
             lastGhostTimestamp = timestamp;
         }
@@ -455,8 +456,8 @@
         window.lastGhost4Timestamp = timestamp;
         ghost4AnimationId = requestAnimationFrame((newTimestamp) =>
             moveGhost4(ghost, ghostPosition, newTimestamp, window.lastGhost4Timestamp)
-        );
-    }
+        ); */
+    /* } */
 
     setTimeout(() => {
         isChasing = true;
@@ -540,6 +541,13 @@
         }
         resetPositions(triggeringGhostId);
     }
+
+    function lerp(position, targetPosition) {
+// update position by 20% of the distance between position and target position
+console.log('hejsan');
+  position.x += (targetPosition.x - position.x)*0.2;
+  position.y += (targetPosition.y - position.y)*0.2;
+}
 
 </script>
 </body>
