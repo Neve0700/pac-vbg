@@ -30,40 +30,54 @@ body {
     height: 620px; /* Samma höjd som spelområdet */
 }
 #gameArea {
-    scale: 1.5; /* Skala upp spelområdet */
+    scale: 1.3; /* Skala upp spelområdet */
     display: grid;
     width: 560px;
     height: 620px;
     grid-template-columns: repeat(28, 20px);
     grid-template-rows: repeat(31, 20px);
-    background-image: url(asphalt.jpg);
+    background-image: url(asphalt.png);
     background-size: cover;
     background-position: center;
     position: relative;
 }
 #pacman {
-    width: 15px; 
-    height:15px;
-    margin: 1px;
-    background-color: rgb(255, 215, 0);
-    border: 2px solid #e6c200;
-    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
 }
+ 
+.sprite {
+    width: 100%;
+    height: 100%;
+    background-image: url('garbage-truck.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: transform 0.1s linear;
+    transform-origin: center center; /* Viktigt för rotation/flip */
+}
+ 
 .dot {
-    width: 20%; 
-    height: 20%;
-    background-color: rgb(255, 255, 255);
-    border: 0.01px solid #000000;
-    border-radius: 50%;
-    justify-self: center;
-    align-self: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    user-select: none;
 }
+
 .wall {
-    background-color: rgb(0, 0, 142);
+    background-color: rgb(0, 123, 47);
     width: 20px;
     height: 20px;
 }
-#ghost {
+#redGhost {
     width: 15px;
     height: 15px;
     margin: 1px;
@@ -73,7 +87,7 @@ body {
     transform: translate(15%, 15%);
     position: absolute;
 }
-#ghost2, #ghost3, #ghost4 {
+#cyanGhost, #pinkGhost, #orangeGhost {
     width: 15px;
     height: 15px;
     border-radius: 50%;

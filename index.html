@@ -13,15 +13,18 @@
     </div>
     <div id="gameContainer">
         <div id="gameArea">
-            <div id="pacman"></div>
+            <div id="pacman">
+                <div class="sprite"></div>
+            </div>
         </div>
     </div>
     <script>
         const pacman = document.getElementById('pacman');
+        const sprite = pacman.querySelector('.sprite');
         const gameArea = document.getElementById('gameArea');
         const scoreElement = document.getElementById('score');
-        let pacmanPosition = { x: 15, y: 24 }; 
-        let direction = { x: -1, y: 0 }; 
+        let pacmanPosition = { x: 15, y: 16 }; 
+        let direction = { x: 0, y: 1 }; 
         let queuedDirection = { x: 0, y: 0 }; 
         const moveSpeed = 4; 
         let lastTimestamp = 0; 
@@ -53,11 +56,11 @@
             'W.WWWWW.WWWWWW.WWWWW.WWWWW.W',
             'W.WWWWW.WWWWWW.WWWWW.WWWWW.W',
             'W.WWWWW.WWWWWW.WWWWW.WWWWW.W',
-            'W .........................W',
+            '  ......................... ',
             'W.WWWWWW.WWWWW.WWWW.WWWWWW.W',
             'W.WWWWWW.WWWWW.WWWW.WWWWWW.W',
             'W.WWWWWW.WWWWW.WWWW.WWWWWW.W',
-            'W..........................W',
+            ' .......................... ',
             'W.WWWWW.WWWWWW.WWWWW.WWWWW.W',
             'W.WWWWW.WWWWWW.WWWWW.WWWWW.W',
             'W.WWWWW.WWWWWW.WWWWW.WWWWW.W',
@@ -87,19 +90,21 @@
             });
         }
 
-        function createDots() {
-            map.forEach((row, rowIndex) => {
-                [...row].forEach((cell, colIndex) => {
-                    if (cell === '.') {
-                        const dot = document.createElement('div');
-                        dot.classList.add('dot');
-                        dot.style.gridColumn = `${colIndex + 1}`;
-                        dot.style.gridRow = `${rowIndex + 1}`;
-                        gameArea.appendChild(dot);
-                    }
-                });
-            });
-        }
+function createDots() {
+    const emojis = ['🧻', '🍌', '🍟', '🧃', '🍬', '🥤', '🧴', '🧦']; // Lägg till fler om du vill
+    map.forEach((row, rowIndex) => {
+        [...row].forEach((cell, colIndex) => {
+            if (cell === '.') {
+                const emoji = document.createElement('div');
+                emoji.classList.add('dot');
+                emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                emoji.style.gridColumn = `${colIndex + 1}`;
+                emoji.style.gridRow = `${rowIndex + 1}`;
+                gameArea.appendChild(emoji);
+            }
+        });
+    });
+}
 
         function canMoveTo(x, y) {
             const col = Math.round(x);
@@ -145,9 +150,8 @@
             const nextY = pacmanPosition.y + direction.y * distance;
 
             if (canMoveTo(nextX, nextY)) {
-                lerp(pacmanPosition.x, nextX);
                 
-                /* pacmanPosition.x = nextX; */
+                pacmanPosition.x = nextX; 
                 pacmanPosition.y = nextY;
 
                 if (pacmanPosition.x < 1) {
@@ -209,12 +213,50 @@
                     break;
                 case 'ArrowLeft':
                     queuedDirection = { x: -1, y: 0 };
+                    sprite.style.transform = 'scaleX(1)'; // Vänd Pacman åt vänster
                     break;
                 case 'ArrowRight':
                     queuedDirection = { x: 1, y: 0 };
+                    sprite.style.transform = 'scaleX(-1)'; // Vänd Pacman åt höger
                     break;
             }
         });
+let startX = 0;
+let startY = 0;
+ 
+document.addEventListener('touchstart', (event) => {
+    const touch = event.touches[0];
+    startX = touch.clientX;
+    startY = touch.clientY;
+});
+ 
+document.addEventListener('touchend', (event) => {
+    const touch = event.changedTouches[0];
+    const deltaX = touch.clientX - startX;
+    const deltaY = touch.clientY - startY;
+ 
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        // Horisontellt svep
+        if (deltaX > 30) {
+            // Höger
+            queuedDirection = { x: 1, y: 0 };
+            pacman.style.transform = 'scaleX(-1)';
+        } else if (deltaX < -30) {
+            // Vänster
+            queuedDirection = { x: -1, y: 0 };
+            pacman.style.transform = 'scaleX(1)';
+        }
+    } else {
+        // Vertikalt svep
+        if (deltaY > 30) {
+            // Ner
+            queuedDirection = { x: 0, y: 1 };
+        } else if (deltaY < -30) {
+            // Upp
+            queuedDirection = { x: 0, y: -1 };
+        }
+    }
+});
 
         createDots();
         createWalls();
@@ -225,32 +267,32 @@
     <script>
     
     const ghost = document.createElement('div');
-    ghost.id = 'ghost';
+    ghost.id = 'redGhost';
     gameArea.appendChild(ghost);
 
     const ghost2 = document.createElement('div');
-    ghost2.id = 'ghost2';
+    ghost2.id = 'pinkGhost';
     ghost2.style.backgroundColor = 'pink'; 
-    ghost2.style.gridColumn = '13';
-    ghost2.style.gridRow = '15';
+    ghost2.style.gridColumn = '2';
+    ghost2.style.gridRow = '30';
     gameArea.appendChild(ghost2);
 
     const ghost3 = document.createElement('div');
-    ghost3.id = 'ghost3';
+    ghost3.id = 'cyanGhost';
     ghost3.style.backgroundColor = 'cyan'; 
-    ghost3.style.gridColumn = '15'; 
-    ghost3.style.gridRow = '15';
+    ghost3.style.gridColumn = '27'; 
+    ghost3.style.gridRow = '2';
     gameArea.appendChild(ghost3);
 
     const ghost4 = document.createElement('div');
-    ghost4.id = 'ghost4';
+    ghost4.id = 'orangeGhost';
     ghost4.style.backgroundColor = 'orange'
-    ghost4.style.gridColumn = '16';
-    ghost4.style.gridRow = '15'; 
+    ghost4.style.gridColumn = '27';
+    ghost4.style.gridRow = '30'; 
     gameArea.appendChild(ghost4);
 
-    let ghostPosition = { x: 14, y: 15 }; 
-    let ghostPosition2 = { x: 13, y: 15 };
+    let ghostPosition = { x: 2, y: 2}; 
+    let ghostPosition2 = { x: 5, y: 5 };
     let ghostPosition3 = { x: 15, y: 15 };
     let ghostPosition4 = { x: 16, y: 15 };
     const ghostSpeed = 4; 
@@ -307,7 +349,7 @@
         );
     } 
 
-    /* function moveGhost(ghost, ghostPosition, timestamp, lastGhostTimestamp) {
+    function moveGhost(ghost, ghostPosition, timestamp, lastGhostTimestamp) {
         if (!lastGhostTimestamp) {
             lastGhostTimestamp = timestamp;
         }
@@ -456,8 +498,8 @@
         window.lastGhost4Timestamp = timestamp;
         ghost4AnimationId = requestAnimationFrame((newTimestamp) =>
             moveGhost4(ghost, ghostPosition, newTimestamp, window.lastGhost4Timestamp)
-        ); */
-    /* } */
+        ); 
+     } 
 
     setTimeout(() => {
         isChasing = true;
@@ -478,20 +520,24 @@
     function resetPositions(triggeringGhostId) {
 
         pacmanPosition.x = 15;
-        pacmanPosition.y = 24;
-        direction = { x: -1, y: 0 };
+        pacmanPosition.y = 16;
+        direction = { x: 0, y: 1 };
         queuedDirection = { x: 0, y: 0 };
         pacman.style.gridColumn = Math.round(pacmanPosition.x);
         pacman.style.gridRow = Math.round(pacmanPosition.y);
 
-        ghostPosition.x = 14;
-        ghostPosition.y = 15;
-        ghostPosition2.x = 13;
-        ghostPosition2.y = 15;
-        ghostPosition3.x = 15;
-        ghostPosition3.y = 15;
-        ghostPosition4.x = 16;
-        ghostPosition4.y = 15;
+        ghostPosition.x = 2;
+        ghostPosition.y = 2;
+
+        ghostPosition2.x = 2;
+        ghostPosition2.y = 30;
+
+        ghostPosition3.x = 27;
+        ghostPosition3.y = 2;
+
+        ghostPosition4.x = 27;
+        ghostPosition4.y = 30;
+
         ghost.style.gridColumn = Math.round(ghostPosition.x);
         ghost.style.gridRow = Math.round(ghostPosition.y);
         ghost2.style.gridColumn = Math.round(ghostPosition2.x);
